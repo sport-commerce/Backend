@@ -1,0 +1,38 @@
+@@ -0,0 +1,37 @@
+# Node modules
+node_modules/
+
+# TypeScript Compiler output
+dist/
+*.tsbuildinfo
+
+# IDE / Editor
+.vscode/
+.idea/
+*.iml
+*.log
+*.log.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment variables
+.env
+**/*.env
+
+# Test and coverage
+coverage/
+
+# Dependency locks
+package-lock.json
+yarn.lock
+
+# Cache and temporary
+*.cache
+*.tmp
+
+# Other frameworks/tools
+.next/
