@@ -20,17 +20,19 @@ export class UserRepository implements IUserRepository {
     if (!userEntity) {
       return null;
     }
-  
+
     const { seq, email, password } = userEntity;
-  
+
     return this.userFactory.reconstitute(seq, email, password);
   }
 
-  async save(email: string, password: string): Promise<void> {
+  async save(email: string, password: string): Promise<User> {
     const user = new UserEntity();
     user.email = email;
     user.password = password;
 
-    await this.userRepository.save(user);
+    const userEntity = await this.userRepository.save(user);
+
+    return this.userFactory.reconstitute(userEntity.seq, userEntity.email, user.password);
   }
 }
