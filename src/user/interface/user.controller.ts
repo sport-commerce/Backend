@@ -1,18 +1,20 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import { CreateUserCommand } from '../application/command/create-user.command';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Controller, Get, Param } from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
+import { CheckEmailAvailabilityQuery } from '../application/query/check-email-availability.query';
+import { CheckNicknameAvailabilityQuery } from '../application/query/check-nickname-availability.query';
 
 @Controller('users')
 export class UserController {
-  constructor(private commandBus: CommandBus) {}
+  constructor(private queryBus: QueryBus) {}
 
-  @Post()
-  async createUser(@Body() dto: CreateUserDto): Promise<void> {
-    const { email, password } = dto;
+  @Get('emails/availability/:email')
+  async checkEmailAvailability(@Param('email') email: string): Promise<boolean> {
+    return await this.queryBus.execute(new CheckEmailAvailabilityQuery(email));
+  }
 
-    const command = new CreateUserCommand(email, password);
-
-    await this.commandBus.execute(command);
+  @Get('nickname/availability/:nickname')
+  async checkNicknameAvailability(@Param('nickname') nickname: string): Promise<boolean> {
+    const result = await this.queryBus.execute(new CheckNicknameAvailabilityQuery(nickname));
+    return result;
   }
 }

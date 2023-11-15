@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/common/infra/db/entity/user.entity';
+import { UserFactory } from 'src/common/user.factory';
 import { IUserRepository } from 'src/user/domain/repository/iuser.repository';
-import { User } from 'src/user/domain/user';
-import { UserFactory } from 'src/user/domain/user.factory';
 import { Repository } from 'typeorm';
-import { UserEntity } from '../entity/user.entity';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -13,26 +12,28 @@ export class UserRepository implements IUserRepository {
     private userFactory: UserFactory,
   ) {}
 
-  async findByEmail(emailAddress: string): Promise<User | null> {
+  async existByEmail(email: string): Promise<boolean> {
     const userEntity = await this.userRepository.findOne({
-      where: { email: emailAddress }, // email 변수를 emailAddress로 변경
+      where: { email: email },
     });
-    if (!userEntity) {
-      return null;
-    }
 
-    const { seq, email, password } = userEntity;
-
-    return this.userFactory.reconstitute(seq, email, password);
+    return !!userEntity;
   }
 
-  async save(email: string, password: string): Promise<User> {
+  async existByNickname(nickname: string): Promise<boolean> {
+    const userEntity = await this.userRepository.findOne({
+      where: { nickname: nickname },
+    });
+
+    return !!userEntity;
+  }
+
+  async save(email: string, nickname: string): Promise<bigint> {
     const user = new UserEntity();
     user.email = email;
-    user.password = password;
+    user.nickname = nickname;
 
-    const userEntity = await this.userRepository.save(user);
-
-    return this.userFactory.reconstitute(userEntity.seq, userEntity.email, user.password);
+    const newUser = await this.userRepository.save(user);
+    return newUser.seq;
   }
 }
