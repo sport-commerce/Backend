@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { CommonModule } from './common/common.module';
-import { EmailModule } from './email/email.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -22,12 +20,12 @@ import { UserModule } from './user/user.module';
       database: process.env.DATABASE_SCHEMA,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.DATABASE_SYNCHRONIZE === 'true',
+      logging: process.env.DATABASE_QUERY_LOGGING === 'true',
     }),
     AuthModule,
-    CommonModule,
-    EmailModule,
   ],
   controllers: [],
   providers: [],
+  exports: [],
 })
 export class AppModule {}

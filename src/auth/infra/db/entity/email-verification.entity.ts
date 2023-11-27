@@ -1,5 +1,5 @@
-import { EmailVerificationContentType } from 'src/auth/domain/email-verification-content-type.enum';
-import { EmailVerificationStatus } from 'src/auth/domain/email-verification-status.enum';
+import { EmailVerificationContentType } from 'src/auth/domain/model/email-verification-content-type.enum';
+import { EmailVerificationStatus } from 'src/auth/domain/model/email-verification-status.enum';
 import { UserEntity } from 'src/common/infra/db/entity/user.entity';
 import {
   BeforeInsert,
