@@ -1,14 +1,14 @@
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import * as bcrypt from 'bcrypt';
-import { EmailVerificationContentType } from 'src/auth/domain/email-verification-content-type.enum';
+import { EmailVerificationContentType } from 'src/auth/domain/model/email-verification-content-type.enum';
+import { SignupType } from 'src/auth/domain/model/signup-type.enum';
+import { UserAuth } from 'src/auth/domain/model/user-auth';
 import { IAuthRepository } from 'src/auth/domain/repository/iauth.repository';
 import { IEmailVerificationRepository } from 'src/auth/domain/repository/iemail-verification.repository';
 import { ITransactionManager } from 'src/auth/domain/repository/itransaction-manager';
 import { IUserRepository } from 'src/auth/domain/repository/iuser.repository';
-import { SignupType } from 'src/auth/domain/signup-type.enum';
-import { EMAIL_VERIFICATION_EXPIRY_MINUTES } from 'src/common/constant';
-import { UserFactory } from 'src/common/user.factory';
+import { UserFactory } from 'src/common/infra/user.factory';
+import { EMAIL_VERIFICATION_EXPIRY_MINUTES } from 'src/constant';
 import { v4 as uuidv4 } from 'uuid';
 import { IEmailService } from '../adapter/iemail.serivce';
 import { SignupCommand } from './signup.command';
@@ -29,49 +29,43 @@ export class SignupCommandHandler implements ICommandHandler<SignupCommand> {
   async execute(command: SignupCommand) {
     const { email, nickname, password } = command;
 
-    const signupVerifyToken = await this.transactionManager.transaction(async () => {
-      const userSeq = await this.registerUser(email, nickname, password);
-      return await this.createEmailVerification(email, userSeq);
-    });
-
-    this.emailService.sendMemberJoinVerification(email, signupVerifyToken);
-  }
-
-  private async registerUser(email: string, nickname: string, password: string): Promise<bigint> {
     const isEmailExist = await this.userRepository.existByEmail(email);
     if (isEmailExist) {
       throw new UnprocessableEntityException(
-        '이미 등록된 이메일 주소입니다. 다른 이메일 주소를 사용해주세요.',
+        'This email address is already registered. Please use a different email address.',
       );
     }
 
     const isNicknameExist = await this.userRepository.existByNickname(nickname);
     if (isNicknameExist) {
       throw new UnprocessableEntityException(
-        '이미 등록된 닉네임입니다. 다른 닉네임을 사용해주세요.',
+        'This nickname is already registered. Please use a different nickname.',
       );
     }
 
-    const saltRounds = parseInt(process.env.ENCRYPTION_SALT_OR_ROUND);
-    const salt = await bcrypt.genSalt(saltRounds);
-    const encryptedPassword = await bcrypt.hash(password, salt);
+    const { encryptedPassword, salt } = await UserAuth.getEncryptPassword(password);
 
-    const newUserSeq = await this.userRepository.create(email, nickname);
-    await this.authRepository.create(newUserSeq, SignupType.EMAIL, email, encryptedPassword);
-
-    return newUserSeq;
-  }
-
-  private async createEmailVerification(email: string, newUserSeq: bigint): Promise<string> {
     const signupVerifyToken = uuidv4();
     const expireDate = new Date(new Date().getTime() + EMAIL_VERIFICATION_EXPIRY_MINUTES * 60000);
-    await this.emailVerificationRepository.create(
-      email,
-      EmailVerificationContentType.SIGNUP,
-      signupVerifyToken,
-      newUserSeq,
-      expireDate,
-    );
-    return signupVerifyToken;
+
+    await this.transactionManager.transaction(async () => {
+      const newUserSeq = await this.userRepository.create(email, nickname);
+      await this.authRepository.create(
+        newUserSeq,
+        SignupType.EMAIL,
+        email,
+        encryptedPassword,
+        salt,
+      );
+      await this.emailVerificationRepository.create(
+        email,
+        EmailVerificationContentType.SIGNUP,
+        signupVerifyToken,
+        newUserSeq,
+        expireDate,
+      );
+    });
+
+    this.emailService.sendMemberJoinVerification(email, signupVerifyToken);
   }
 }

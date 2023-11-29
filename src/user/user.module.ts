@@ -1,27 +1,16 @@
 import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from 'src/common/common.module';
 import { UserEntity } from 'src/common/infra/db/entity/user.entity';
-import { UserFactory } from 'src/common/user.factory';
-import { CheckEmailAvailabilityQueryHandler } from './application/query/check-email-availability.handler';
-import { CheckNicknamevailabilityQueryHandler } from './application/query/check-nickname-availability.handler';
-import { UserRepository } from './infra/db/repository/UserRepository';
 import { UserController } from './interface/user.controller';
-
-const factories = [UserFactory];
-
+import { UserRepository } from './user.repository';
+import { UserService } from './user.service';
 const repositories = [{ provide: 'UserRepository', useClass: UserRepository }];
 
-const commandHandlers = [];
-
-const queryHandlers = [CheckEmailAvailabilityQueryHandler, CheckNicknamevailabilityQueryHandler];
-
-const eventHandlers = [];
-
 @Module({
-  imports: [CqrsModule, TypeOrmModule.forFeature([UserEntity])],
+  imports: [CommonModule, TypeOrmModule.forFeature([UserEntity])],
   controllers: [UserController],
-  providers: [...commandHandlers, ...queryHandlers, ...factories, ...repositories],
-  exports: [...factories, ...repositories],
+  providers: [...repositories, UserService],
+  exports: [...repositories],
 })
 export class UserModule {}

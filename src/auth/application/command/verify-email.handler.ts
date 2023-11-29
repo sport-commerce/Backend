@@ -12,7 +12,7 @@ import { VerifyEmailCommand } from './verify-email.command';
 
 @Injectable()
 @CommandHandler(VerifyEmailCommand)
-export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
+export class VerifyEmailCommandHandler implements ICommandHandler<VerifyEmailCommand> {
   constructor(
     @Inject('EmailVerificationRepository')
     private readonly emailVerificationRepository: IEmailVerificationRepository,
@@ -26,30 +26,30 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
 
     const emailVerification =
       await this.emailVerificationRepository.existsByToken(signupVerifyToken);
-
     if (!emailVerification) {
-      throw new BadRequestException('유효하지 않은 토큰입니다.');
+      throw new BadRequestException('Invalid token.');
     }
 
     const userSeq = emailVerification.getUserSeq();
     const user = await this.userRepository.findBySeq(userSeq);
-
-    if (!user.isPreVerificationStatue() || !emailVerification.isPreVerificationStatue()) {
-      throw new UnprocessableEntityException('이미 인증된 토큰입니다.');
+    if (!user) {
+      throw new Error('User not found');
     }
 
-    const emailVerificationResult = user.checkEmailVerification() | emailVerification.check();
-    if (emailVerificationResult === 0) {
-      throw new Error('이메일 인증에 실패했습니다.');
+    if (!emailVerification.isPreVerificationStatus()) {
+      throw new UnprocessableEntityException('Already verified token.');
+    }
+
+    const userVerificationSucceeded = user.checkEmailVerification();
+    const emailVerificationSucceeded = emailVerification.check();
+
+    if (!userVerificationSucceeded || !emailVerificationSucceeded) {
+      throw new Error('Unexpected verification status.');
     }
 
     await this.transactionManager.transaction(async () => {
       await this.emailVerificationRepository.save(emailVerification);
       await this.userRepository.save(user);
     });
-
-    if (emailVerificationResult === 0) {
-      throw new Error('이메일 인증에 실패했습니다.');
-    }
   }
 }

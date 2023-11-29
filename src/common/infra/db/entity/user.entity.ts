@@ -1,5 +1,5 @@
-import { UserRole } from 'src/common/user-role.enum';
-import { UserStatus } from 'src/common/user-status.enum';
+import { UserRole } from 'src/common/domain/user-role.enum';
+import { UserStatus } from 'src/common/domain/user-status.enum';
 import {
   BeforeInsert,
   Column,

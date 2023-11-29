@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EmailVerification } from 'src/auth/domain/email-verification';
-import { EmailVerificationContentType } from 'src/auth/domain/email-verification-content-type.enum';
+import { EmailVerification } from 'src/auth/domain/model/email-verification';
+import { EmailVerificationContentType } from 'src/auth/domain/model/email-verification-content-type.enum';
 import { IEmailVerificationRepository } from 'src/auth/domain/repository/iemail-verification.repository';
 import { Repository } from 'typeorm';
 import { EmailVerificationEntity } from '../entity/email-verification.entity';
@@ -21,9 +21,20 @@ export class EmailVerificationRepository implements IEmailVerificationRepository
       return null;
     }
 
-    const { seq, receiptEmail, contentType, status, expireAt, userSeq } = emailVerificationEntity;
+    const { seq, receiptEmail, contentType, status, expireAt, userSeq, createdAt, updatedAt } =
+      emailVerificationEntity;
 
-    return new EmailVerification(seq, receiptEmail, contentType, token, status, expireAt, userSeq);
+    return new EmailVerification(
+      seq,
+      receiptEmail,
+      contentType,
+      token,
+      status,
+      expireAt,
+      userSeq,
+      createdAt,
+      updatedAt,
+    );
   }
 
   async create(

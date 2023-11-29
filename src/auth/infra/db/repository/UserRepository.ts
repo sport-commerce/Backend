@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IUserRepository } from 'src/auth/domain/repository/iuser.repository';
-import { User } from 'src/common/user';
-import { UserStatus } from 'src/common/user-status.enum';
-import { UserFactory } from 'src/common/user.factory';
+import { User } from 'src/common/domain/user';
+import { UserStatus } from 'src/common/domain/user-status.enum';
+import { UserFactory } from 'src/common/infra/user.factory';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../../../../common/infra/db/entity/user.entity';
 
@@ -17,8 +17,8 @@ export class UserRepository implements IUserRepository {
   async findBySeq(seq: bigint): Promise<User> {
     const userEntity = await this.userRepository.findOneBy({ seq });
 
-    const { nickname, email, status, role } = userEntity;
-    return this.userFactory.reconstitute(seq, nickname, email, status, role);
+    const { nickname, email, status, role, createdAt, updatedAt } = userEntity;
+    return this.userFactory.reconstitute(seq, nickname, email, status, role, createdAt, updatedAt);
   }
 
   async existByEmail(email: string): Promise<boolean> {

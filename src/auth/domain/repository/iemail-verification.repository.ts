@@ -1,5 +1,5 @@
-import { EmailVerification } from '../email-verification';
-import { EmailVerificationContentType } from '../email-verification-content-type.enum';
+import { EmailVerification } from '../model/email-verification';
+import { EmailVerificationContentType } from '../model/email-verification-content-type.enum';
 
 export interface IEmailVerificationRepository {
   existsByToken: (token: string) => Promise<EmailVerification | null>;
